@@ -2,7 +2,10 @@
 
 namespace App\Http\Controllers;
 
-use Illuminate\Http\Request;
+use App\Models\Category;
+use App\Models\Post;
+use  Illuminate\Http\Request;
+use File;
 
 class PostController extends Controller
 {
@@ -13,7 +16,8 @@ class PostController extends Controller
      */
     public function index()
     {
-        return view('index');
+        $posts = Post::paginate(10);
+        return view('index', compact('posts'));
     }
 
     /**
@@ -23,7 +27,9 @@ class PostController extends Controller
      */
     public function create()
     {
-        //
+        $categories = Category::all();
+
+        return view('create', compact('categories'));
     }
 
     /**
@@ -34,7 +40,24 @@ class PostController extends Controller
      */
     public function store(Request $request)
     {
-        //
+       $request->validate([
+            'image' => ['required', 'max:2028', 'image'],
+            'title' => ['required', 'max:255'],
+            'category_id' => ['required', 'integer'],
+            'description' => ['required']
+       ]);
+            // $fileName = time().'_'.$request->image->getClientOriginalName();
+            // $filePath = $request->image->storeAs('/images', $fileName);
+            $fileName = time() . '.' . $request->image->extension();
+             $request->image->storeAs('public/images', $fileName);
+            
+            $post = new Post();
+            $post->title = $request->title;
+            $post->description = $request->description;
+            $post->category_id = $request->category_id;
+            $post->image = $fileName;
+            $post->save();
+            return redirect()->route('posts.index');
     }
 
     /**
@@ -45,7 +68,8 @@ class PostController extends Controller
      */
     public function show($id)
     {
-        //
+        $post = Post::findOrFail($id);
+        return view('show', compact('post'));
     }
 
     /**
@@ -56,7 +80,9 @@ class PostController extends Controller
      */
     public function edit($id)
     {
-        //
+        $post = Post::findOrFail($id);
+        $categories = Category::all();
+        return view('edit', compact('post', 'categories'));
     }
 
     /**
@@ -68,7 +94,29 @@ class PostController extends Controller
      */
     public function update(Request $request, $id)
     {
-        //
+          $request->validate([
+            'title' => ['required', 'max:255'],
+            'category_id' => ['required', 'integer'],
+            'description' => ['required']
+       ]);
+            $post = Post::findOrFail($id);
+
+            if($request->hasFile('image')){
+                $request->validate([
+                'image' => ['required', 'max:2028', 'image'],
+            ]);
+                $fileName = time() . '.' . $request->image->extension();
+                $request->image->storeAs('public/images', $fileName);
+                File::delete(public_path('storage/images/'.$post->image));
+                $post->image = $fileName;
+
+         }
+            
+                $post->title = $request->title;
+                $post->description = $request->description;
+                $post->category_id = $request->category_id;
+                $post->save();
+                return redirect()->route('posts.index');
     }
 
     /**
@@ -79,6 +127,24 @@ class PostController extends Controller
      */
     public function destroy($id)
     {
-        //
+        $destroy = Post::findOrFail($id);
+        $destroy->delete();
+        return redirect()->route('posts.index');
+    }
+    public function trashed(){
+        $posts = Post::onlyTrashed()->get();
+        return view('trashed', compact('posts'));
+    }
+     public function restore($id){
+        $post = Post::onlyTrashed()->findOrFail($id);
+        $post->restore();
+        return  redirect()->back();
+    }
+
+    public function delete($id)  {
+        $post = Post::onlyTrashed()->findOrFail($id);
+        File::delete(public_path('storage/images/'.$post->image));
+        $post->forceDelete();
+        return redirect()->back();
     }
 }

@@ -6,11 +6,11 @@
             <div class="card-header">
                 <div class="row">
                     <div class="col-md-6">
-                           All Posts
+                           Trashed Posts
                     </div>
                     <div class="col-md-6 d-flex justify-content-end">
                         <a href="{{ route('posts.create')}}" class="btn btn-success">Create</a>
-                        <a href="{{ route('posts.trashed')}}" class="btn btn-warning">Trashed</a>
+                        <a href="" class="btn btn-warning">Trashed</a>
                     </div>
                 </div>
             </div>
@@ -39,20 +39,18 @@
                             <td>{{$post->category->name}}</td>
                             <td>{{date('d-m-Y', strtotime($post->created_at)) }}</td>
                             <td class="d-flex gap-2">
-                                <a href="{{ route('posts.show', $post->id)}}" class="btn-sm btn-success">Show</a>
-                                <a href="{{ route('posts.edit', $post->id)}}" class="btn-sm btn-primary">Edit</a>
-                                {{-- <a href="" class="btn-sm btn-danger">Delete</a> --}}
-                                <form action="{{route('posts.destroy', $post->id)}}" method="POST">
+                                <a href="{{ route('posts.restore', $post->id)}}" class="btn-sm btn-success">Restore</a>
+
+                                <form action="{{route('posts.delete', $post->id)}}" method="POST">
                                     @csrf
                                     @method('DELETE')
-                                    <button class="btn-sm btn-danger">Delete</button>
+                                    <button class="btn-sm btn-danger">Delete Permanent</button>
                                 </form>
                             </td>
                             </tr>
                         @endforeach
                     </tbody>
                 </table>
-                {{ $posts->links()}}
             </div>
         </div>
     </div>
